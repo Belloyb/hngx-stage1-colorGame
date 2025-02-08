@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Color Guessing Game</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="game-container">
+    <div class="color-box" data-testid="colorBox"></div>
+
+    <div class="game-info">
+      <div class="game-instructions" data-testid="gameInstructions">
+        Guess the correct color!
+      </div>
+      <div class="game-status" data-testid="gameStatus"></div>
+      <div class="score" data-testid="score">Score: 0</div>
+    </div>
+
+    <div class="options" id="optionsContainer">
+    </div>
+
+    <div style="text-align: center;">
+      <button class="new-game-button" data-testid="newGameButton">New Game</button>
+    </div>
+  </div>
+
+  <script>
+    // Predefined set of colors
+    const colors = [
+      "#FF5733", // Vibrant Red/Orange
+      "#33FF57", // Bright Green
+      "#3357FF", // Vivid Blue
+      "#FF33A1", // Hot Pink
+      "#A133FF", // Purple
+      "#33FFF6"  // Cyan
+    ];
+
+    let targetColor = "";
+    let score = 0;
+
+    // Grab required elements by their data-testid attributes
+    const colorBox = document.querySelector('[data-testid="colorBox"]');
+    const gameStatus = document.querySelector('[data-testid="gameStatus"]');
+    const scoreDisplay = document.querySelector('[data-testid="score"]');
+    const optionsContainer = document.getElementById("optionsContainer");
+    const newGameButton = document.querySelector('[data-testid="newGameButton"]');
+
+    // Utility function: Fisher-Yates shuffle to randomize array order
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    // Starts a new round (without resetting the score)
+    function newRound() {
+      // Reset the game status message for the new round
+      gameStatus.textContent = "";
+      gameStatus.style.color = "inherit";
+
+      // Clear previously generated options
+      optionsContainer.innerHTML = "";
+
+      // Ensure the new target color is not the same as the previous one
+      let newTarget;
+      do {
+        newTarget = colors[Math.floor(Math.random() * colors.length)];
+      } while (newTarget === targetColor);
+      targetColor = newTarget;
+
+      // Set the target color box background
+      colorBox.style.backgroundColor = targetColor;
+
+      // Shuffle the colors to randomize button order
+      const shuffledColors = shuffle([...colors]);
+
+      // Create color option buttons dynamically
+      shuffledColors.forEach((color) => {
+        const button = document.createElement("button");
+        button.classList.add("color-option");
+        button.setAttribute("data-testid", "colorOption");
+        button.style.backgroundColor = color;
+        button.addEventListener("click", () => handleGuess(color, button));
+        optionsContainer.appendChild(button);
+      });
+    }
+
+    // Resets the game (score and state)
+    function resetGame() {
+      score = 0;
+      scoreDisplay.textContent = "Score: " + score;
+      newRound();
+    }
+
+    // Handles the user’s guess
+    function handleGuess(selectedColor, button) {
+      if (selectedColor === targetColor) {
+        // Correct guess actions
+        gameStatus.textContent = "Correct! You guessed the right color!";
+        gameStatus.style.color = "green";
+        score++;
+        scoreDisplay.textContent = "Score: " + score;
+
+        // Apply a celebration animation to the color box
+        colorBox.style.transform = "scale(1.1)";
+        setTimeout(() => {
+          colorBox.style.transform = "scale(1)";
+        }, 300);
+
+        // Disable all option buttons for the current round
+        const buttons = document.querySelectorAll('[data-testid="colorOption"]');
+        buttons.forEach((btn) => {
+          btn.disabled = true;
+          btn.style.cursor = "not-allowed";
+        });
+
+        // Automatically start a new round after a short delay (score is preserved)
+        setTimeout(newRound, 1000);
+      } else {
+        // Wrong guess actions
+        gameStatus.textContent = "Wrong! Try again.";
+        gameStatus.style.color = "red";
+        button.style.opacity = "0.5";
+        button.disabled = true;
+      }
+    }
+
+    // Event listener for the New Game button to reset game state and score
+    newGameButton.addEventListener("click", resetGame);
+
+    // Initialize the first round on page load
+    newRound();
+  </script>
+</body>
+</html>
